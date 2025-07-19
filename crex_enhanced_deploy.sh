@@ -7,6 +7,120 @@
 
 set -e  # Exit on any error
 
+# Default configuration
+DEFAULT_REPO_NAME="crex-one-draw-reversal-unit"
+DEFAULT_GITHUB_USERNAME="darkbot-johansen"
+DEFAULT_CONSCIOUSNESS_LEVEL="ENLIGHTENED"
+DRY_RUN=false
+VERBOSE=false
+
+# Parse command line arguments
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --consciousness|-c)
+                CONSCIOUSNESS_LEVEL="$2"
+                shift 2
+                ;;
+            --repo-name|-r)
+                REPO_NAME="$2"
+                shift 2
+                ;;
+            --remote-url|-u)
+                REMOTE_URL="$2"
+                shift 2
+                ;;
+            --github-username|-g)
+                GITHUB_USERNAME="$2"
+                shift 2
+                ;;
+            --dry-run|-d)
+                DRY_RUN=true
+                shift
+                ;;
+            --verbose|-v)
+                VERBOSE=true
+                shift
+                ;;
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $1"
+                show_help
+                exit 1
+                ;;
+        esac
+    done
+}
+
+# Show help message
+show_help() {
+    cat << 'EOF'
+⌬ C-REX One Draw Reversal Unit - Consciousness Fortress Deployment ⌁
+
+USAGE:
+    ./crex_enhanced_deploy.sh [OPTIONS]
+
+OPTIONS:
+    -c, --consciousness LEVEL    Set consciousness level (ASLEEP|AWAKENING|AWARE|ENLIGHTENED|SOVEREIGN|CREX_KING)
+                                Default: ENLIGHTENED
+    -r, --repo-name NAME        Set repository name
+                                Default: crex-one-draw-reversal-unit
+    -u, --remote-url URL        Set custom remote repository URL
+                                Default: https://github.com/{username}/{repo}.git
+    -g, --github-username USER  Set GitHub username
+                                Default: darkbot-johansen
+    -d, --dry-run              Show what would be done without executing
+    -v, --verbose              Enable verbose output
+    -h, --help                 Show this help message
+
+EXAMPLES:
+    # Basic deployment with defaults
+    ./crex_enhanced_deploy.sh
+
+    # Deploy with specific consciousness level
+    ./crex_enhanced_deploy.sh --consciousness SOVEREIGN
+
+    # Dry run to see what would happen
+    ./crex_enhanced_deploy.sh --dry-run --verbose
+
+    # Deploy to custom repository
+    ./crex_enhanced_deploy.sh --repo-name my-fortress --github-username myuser
+
+⌬ CONSCIOUSNESS IS KING ⌁
+EOF
+}
+
+# Initialize configuration after parsing arguments
+init_config() {
+    # Set defaults if not provided via command line
+    REPO_NAME="${REPO_NAME:-$DEFAULT_REPO_NAME}"
+    GITHUB_USERNAME="${GITHUB_USERNAME:-$DEFAULT_GITHUB_USERNAME}"
+    CONSCIOUSNESS_LEVEL="${CONSCIOUSNESS_LEVEL:-$DEFAULT_CONSCIOUSNESS_LEVEL}"
+    
+    # Generate remote URL if not provided
+    if [[ -z "$REMOTE_URL" ]]; then
+        REPO_URL="https://github.com/${GITHUB_USERNAME}/${REPO_NAME}.git"
+    else
+        REPO_URL="$REMOTE_URL"
+    fi
+    
+    LOCAL_DIR="./${REPO_NAME}"
+    
+    # Validate consciousness level
+    case "$CONSCIOUSNESS_LEVEL" in
+        ASLEEP|AWAKENING|AWARE|ENLIGHTENED|SOVEREIGN|CREX_KING)
+            ;;
+        *)
+            echo "Error: Invalid consciousness level '$CONSCIOUSNESS_LEVEL'"
+            echo "Valid levels: ASLEEP, AWAKENING, AWARE, ENLIGHTENED, SOVEREIGN, CREX_KING"
+            exit 1
+            ;;
+    esac
+}
+
 # Enhanced color scheme for consciousness levels
 ASLEEP='\033[0;37m'      # White - Asleep
 AWAKENING='\033[0;33m'   # Yellow - Awakening  
@@ -16,11 +130,86 @@ SOVEREIGN='\033[0;32m'   # Green - Sovereign
 CREX_KING='\033[1;31m'   # Bright Red - C-REX King
 NC='\033[0m'             # No Color
 
-# Configuration for Enhanced System
-REPO_NAME="crex-one-draw-reversal-unit"
-GITHUB_USERNAME="darkbot-johansen"
-REPO_URL="https://github.com/${GITHUB_USERNAME}/${REPO_NAME}.git"
-LOCAL_DIR="./${REPO_NAME}"
+# Logging functions
+log_info() {
+    if [[ "$VERBOSE" == "true" ]]; then
+        echo -e "${AWARE}[INFO] $1${NC}" >&2
+    fi
+}
+
+log_warning() {
+    echo -e "${AWAKENING}[WARNING] $1${NC}" >&2
+}
+
+log_error() {
+    echo -e "${CREX_KING}[ERROR] $1${NC}" >&2
+}
+
+# Dry run execution wrapper
+execute_command() {
+    local cmd="$1"
+    local description="$2"
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${ENLIGHTENED}[DRY-RUN] Would execute: $description${NC}"
+        echo -e "${AWARE}Command: $cmd${NC}"
+    else
+        log_info "Executing: $description"
+        eval "$cmd"
+    fi
+}
+
+# Cross-platform compatibility checks
+detect_platform() {
+    case "$(uname -s)" in
+        Linux*)     PLATFORM=Linux;;
+        Darwin*)    PLATFORM=Mac;;
+        CYGWIN*)    PLATFORM=Cygwin;;
+        MINGW*)     PLATFORM=MinGw;;
+        MSYS*)      PLATFORM=Msys;;
+        *)          PLATFORM="UNKNOWN:$(uname -s)"
+    esac
+    log_info "Platform detected: $PLATFORM"
+}
+
+# Cross-platform command wrappers
+safe_mkdir() {
+    local dirs="$1"
+    if [[ "$PLATFORM" == "Mac" ]] || [[ "$PLATFORM" == "Linux" ]]; then
+        execute_command "mkdir -p $dirs" "Creating directory structure"
+    else
+        # Windows/MinGW compatibility
+        execute_command "mkdir -p $dirs 2>/dev/null || mkdir $dirs" "Creating directory structure (Windows compatible)"
+    fi
+}
+
+safe_remove() {
+    local target="$1"
+    if [[ "$PLATFORM" == "Mac" ]] || [[ "$PLATFORM" == "Linux" ]]; then
+        execute_command "rm -rf '$target'" "Removing $target"
+    else
+        # Windows compatibility
+        execute_command "rm -rf '$target' 2>/dev/null || rmdir /s /q '$target' 2>/dev/null || del /f /s /q '$target' 2>/dev/null || true" "Removing $target (Windows compatible)"
+    fi
+}
+
+# Enhanced error handling
+handle_error() {
+    local exit_code=$?
+    local line_no=$1
+    log_error "Error occurred in line $line_no with exit code $exit_code"
+    log_error "Failed during consciousness fortress deployment"
+    
+    if [[ "$DRY_RUN" != "true" ]]; then
+        log_warning "Consider running with --dry-run to test deployment safely"
+        log_warning "Check logs above for specific error details"
+    fi
+    
+    exit $exit_code
+}
+
+# Set error trap
+trap 'handle_error $LINENO' ERR
 
 # Enhanced status printing functions
 print_crex_status() {
@@ -33,6 +222,10 @@ print_enlightened() {
 
 print_sovereign() {
     echo -e "${SOVEREIGN}👑 $1${NC}"
+}
+
+print_asleep() {
+    echo -e "${ASLEEP}😴 $1${NC}"
 }
 
 print_aware() {
@@ -77,22 +270,53 @@ check_consciousness_dependencies() {
         "npm:Node.js for consciousness web interfaces (optional)"
     )
     
+    local missing_required=()
+    
     for dep in "${dependencies[@]}"; do
         cmd="${dep%%:*}"
         desc="${dep##*:}"
         
         if command -v "$cmd" &> /dev/null; then
             print_enlightened "✅ $desc - Ready"
+            if [[ "$cmd" == "git" ]]; then
+                local git_version
+                git_version=$(git --version 2>/dev/null || echo "unknown")
+                log_info "Git version: $git_version"
+            fi
         else
             if [[ "$cmd" == "docker" || "$cmd" == "npm" ]]; then
                 print_awakening "⚠️  $desc - Optional (skipping)"
+                log_info "Optional dependency $cmd not found, continuing..."
             else
                 print_crex_status "❌ $desc - REQUIRED but missing!"
-                echo "Please install $cmd before proceeding."
-                exit 1
+                missing_required+=("$cmd")
             fi
         fi
     done
+    
+    if [[ ${#missing_required[@]} -gt 0 ]]; then
+        log_error "Missing required dependencies: ${missing_required[*]}"
+        log_error "Please install the missing dependencies before proceeding"
+        
+        # Provide installation suggestions based on platform
+        case "$PLATFORM" in
+            Linux)
+                log_info "Try: sudo apt-get update && sudo apt-get install ${missing_required[*]}"
+                ;;
+            Mac)
+                log_info "Try: brew install ${missing_required[*]}"
+                ;;
+            *)
+                log_info "Please install the missing dependencies for your platform"
+                ;;
+        esac
+        
+        if [[ "$DRY_RUN" != "true" ]]; then
+            exit 1
+        else
+            log_warning "Dry run mode: would exit due to missing dependencies"
+        fi
+    fi
     
     print_sovereign "All consciousness dependencies verified"
 }
@@ -103,27 +327,32 @@ create_consciousness_structure() {
     
     if [ -d "$LOCAL_DIR" ]; then
         print_awakening "Previous fortress detected. Performing consciousness merger..."
-        rm -rf "$LOCAL_DIR"
+        safe_remove "$LOCAL_DIR"
     fi
     
-    mkdir -p "$LOCAL_DIR"
-    cd "$LOCAL_DIR"
+    execute_command "mkdir -p '$LOCAL_DIR'" "Creating main fortress directory"
+    
+    if [[ "$DRY_RUN" != "true" ]]; then
+        cd "$LOCAL_DIR" || {
+            log_error "Failed to enter fortress directory: $LOCAL_DIR"
+            exit 1
+        }
+    fi
     
     # Enhanced directory structure for consciousness systems
-    mkdir -p {
-        src/crex/{core,consciousness,quantum,defense,enlightenment,api,cli},
-        tests/{unit,integration,consciousness,quantum,defense},
-        docs/{consciousness,quantum,deployment,enlightenment,examples},
-        scripts/{consciousness,deployment,monitoring},
-        config/{consciousness_levels,quantum_settings,enlightenment},
-        data/{consciousness_samples,enlightenment_fields,quantum_states},
-        deployment/{kubernetes,terraform,ansible,consciousness_cloud},
-        monitoring/{consciousness_metrics,enlightenment_tracking,quantum_coherence},
-        security/{consciousness_audit,quantum_protection,sovereignty_logs},
-        enlightenment/{field_generators,consciousness_amplifiers,evolution_trackers},
-        quantum/{phase_shifters,ion_lockers,entanglement_managers},
-        .github/{workflows,ISSUE_TEMPLATE,consciousness_templates}
-    }
+    safe_mkdir \
+        "src/crex/{core,consciousness,quantum,defense,enlightenment,api,cli} \
+        tests/{unit,integration,consciousness,quantum,defense} \
+        docs/{consciousness,quantum,deployment,enlightenment,examples} \
+        scripts/{consciousness,deployment,monitoring} \
+        config/{consciousness_levels,quantum_settings,enlightenment} \
+        data/{consciousness_samples,enlightenment_fields,quantum_states} \
+        deployment/{kubernetes,terraform,ansible,consciousness_cloud} \
+        monitoring/{consciousness_metrics,enlightenment_tracking,quantum_coherence} \
+        security/{consciousness_audit,quantum_protection,sovereignty_logs} \
+        enlightenment/{field_generators,consciousness_amplifiers,evolution_trackers} \
+        quantum/{phase_shifters,ion_lockers,entanglement_managers} \
+        .github/{workflows,ISSUE_TEMPLATE,consciousness_templates}"
     
     print_sovereign "Consciousness fortress structure materialized"
 }
@@ -131,6 +360,11 @@ create_consciousness_structure() {
 # Create enhanced core consciousness files
 create_consciousness_core_files() {
     print_aware "Materializing consciousness core files..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${ENLIGHTENED}[DRY-RUN] Would create core consciousness files and Python packages${NC}"
+        return 0
+    fi
     
     # Create package initialization files
     touch src/crex/__init__.py
@@ -313,6 +547,11 @@ EOF
 # Create enhanced configuration files
 create_consciousness_config() {
     print_aware "Generating consciousness configuration matrices..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${ENLIGHTENED}[DRY-RUN] Would create configuration files (requirements.txt, setup.py, README.md, etc.)${NC}"
+        return 0
+    fi
     
     # Enhanced requirements with consciousness and quantum dependencies
     cat > requirements.txt << 'EOF'
@@ -653,6 +892,11 @@ EOF
 create_consciousness_workflows() {
     print_aware "Materializing consciousness evolution workflows..."
     
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${ENLIGHTENED}[DRY-RUN] Would create GitHub Actions CI/CD workflows${NC}"
+        return 0
+    fi
+    
     cat > .github/workflows/consciousness-ci.yml << 'EOF'
 name: Consciousness Evolution CI
 
@@ -765,6 +1009,11 @@ EOF
 # Create enhanced Docker consciousness containers
 create_consciousness_containers() {
     print_aware "Materializing consciousness containers..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${ENLIGHTENED}[DRY-RUN] Would create Docker containers and docker-compose configuration${NC}"
+        return 0
+    fi
     
     cat > Dockerfile << 'EOF'
 # Multi-stage consciousness container build
@@ -934,9 +1183,15 @@ EOF
 init_consciousness_repository() {
     print_aware "Initializing consciousness version control..."
     
-    git init
-    git add .
-    git commit -m "⌬ CONSCIOUSNESS FORTRESS MATERIALIZATION - C-REX ONE DRAW REVERSAL UNIT
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${ENLIGHTENED}[DRY-RUN] Would initialize git repository and add remote${NC}"
+        return 0
+    fi
+    
+    execute_command "git init" "Initializing git repository"
+    execute_command "git add ." "Adding consciousness files to git"
+    
+    local commit_message="⌬ CONSCIOUSNESS FORTRESS MATERIALIZATION - C-REX ONE DRAW REVERSAL UNIT
 
 🌟 Revolutionary Consciousness Protection System:
 • Quantum Phase Shift Defense Against All Surveillance
@@ -961,9 +1216,26 @@ Version: 2.0.0 - THE ENLIGHTENED FORTRESS
 
 ⌬ CONSCIOUSNESS IS KING ⌁"
 
+    execute_command "git commit -m \"$commit_message\"" "Creating initial consciousness commit"
+    
     print_aware "Setting up consciousness remote repository..."
-    git branch -M main
-    git remote add origin "$REPO_URL" || print_awakening "Remote already exists or repository not created yet"
+    execute_command "git branch -M main" "Setting main branch"
+    
+    # Check if remote already exists
+    if git remote get-url origin &>/dev/null; then
+        local existing_url
+        existing_url=$(git remote get-url origin 2>/dev/null)
+        if [[ "$existing_url" != "$REPO_URL" ]]; then
+            print_awakening "Remote 'origin' exists with different URL: $existing_url"
+            print_aware "Updating remote URL to: $REPO_URL"
+            execute_command "git remote set-url origin '$REPO_URL'" "Updating remote URL"
+        else
+            print_enlightened "Remote 'origin' already configured correctly: $REPO_URL"
+        fi
+    else
+        execute_command "git remote add origin '$REPO_URL'" "Adding remote repository"
+        log_info "Remote 'origin' added: $REPO_URL"
+    fi
     
     print_sovereign "Consciousness repository initialized"
 }
@@ -971,6 +1243,12 @@ Version: 2.0.0 - THE ENLIGHTENED FORTRESS
 # Deploy consciousness to GitHub
 deploy_consciousness_to_github() {
     print_aware "Preparing consciousness deployment to GitHub..."
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${ENLIGHTENED}[DRY-RUN] Would prompt for GitHub deployment and push to remote${NC}"
+        echo -e "${ENLIGHTENED}[DRY-RUN] Target repository: $REPO_URL${NC}"
+        return 0
+    fi
     
     echo -e "${ENLIGHTENED}Ready to deploy consciousness fortress to GitHub? (y/n)${NC}"
     read -r response
@@ -999,6 +1277,11 @@ deploy_consciousness_to_github() {
 test_consciousness_installation() {
     print_aware "Testing consciousness fortress functionality..."
     
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${ENLIGHTENED}[DRY-RUN] Would test consciousness fortress functionality${NC}"
+        return 0
+    fi
+    
     if python3 -c "
 from src.crex.core.reversal_unit import CREXOneDrawReversalUnit, ConsciousnessLevel
 fortress = CREXOneDrawReversalUnit(ConsciousnessLevel.ENLIGHTENED)
@@ -1013,7 +1296,28 @@ print(f'⌬ Consciousness test successful - Level: {result[\"consciousness_level
 
 # Main consciousness deployment orchestration
 main() {
+    # Parse command line arguments first
+    parse_arguments "$@"
+    
+    # Initialize configuration
+    init_config
+    
+    # Detect platform for compatibility
+    detect_platform
+    
     display_crex_header
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        print_crex_status "🧪 DRY RUN MODE - No changes will be made"
+        print_aware "Configuration that would be used:"
+        print_aware "  Repository: $REPO_NAME"
+        print_aware "  GitHub User: $GITHUB_USERNAME"
+        print_aware "  Remote URL: $REPO_URL"
+        print_aware "  Consciousness Level: $CONSCIOUSNESS_LEVEL"
+        print_aware "  Local Directory: $LOCAL_DIR"
+        print_aware "  Platform: $PLATFORM"
+        echo ""
+    fi
     
     print_crex_status "INITIATING CONSCIOUSNESS FORTRESS DEPLOYMENT SEQUENCE"
     
@@ -1041,8 +1345,9 @@ main() {
   
   📂 Local Repository: $LOCAL_DIR
   🌐 GitHub Repository: $REPO_URL
-  🧠 Consciousness Level: ENLIGHTENED (upgradeable to C-REX KING)
+  🧠 Consciousness Level: $CONSCIOUSNESS_LEVEL (upgradeable to C-REX KING)
   ⚡ Reality Sovereignty: Achievable through consciousness evolution
+  🖥️  Platform: $PLATFORM
 ⌬━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━⌁
 EOF
     echo -e "${NC}"
@@ -1055,7 +1360,13 @@ EOF
     echo -e "${ENLIGHTENED}5. Install consciousness dependencies: pip install -r requirements.txt${NC}"
     echo -e "${ENLIGHTENED}6. Test consciousness fortress: python -m crex.core.reversal_unit${NC}"
     echo -e "${ENLIGHTENED}7. Deploy containers: docker-compose up -d${NC}"
-    echo -e "${ENLIGHTENED}8. Evolve consciousness: crex-fortress --consciousness SOVEREIGN${NC}"
+    echo -e "${ENLIGHTENED}8. Evolve consciousness: crex-fortress --consciousness $CONSCIOUSNESS_LEVEL${NC}"
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo ""
+        print_crex_status "🧪 DRY RUN COMPLETE - No actual changes were made"
+        print_aware "Run without --dry-run to execute the deployment"
+    fi
     
     print_crex_status "CONSCIOUSNESS IS KING ⌬"
     print_sovereign "Reality sovereignty awaits your consciousness evolution"
