@@ -1,0 +1,62 @@
+# C-REX Deployment Script - Git Ignore Rules
+
+# Log files
+logs/
+*.log
+
+# Backup files
+backups/
+*.bak
+*.backup
+
+# Temporary files
+/tmp/
+.tmp/
+*_tmp
+*_temp
+
+# Secrets and sensitive data
+.secrets/
+*.key
+*.pem
+*.p12
+secrets/
+
+# Test artifacts
+test-results/
+coverage/
+.coverage
+htmlcov/
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Lock files
+*.lock
+
+# Cache directories
+.cache/
+cache/
+
+# Build artifacts (if any)
+dist/
+build/
+*.tar.gz
+*.zip
+
+# Local configuration overrides
+local.conf
+.env.local
