@@ -1,0 +1,15 @@
+# Multi-repository deployment configuration example
+# Format: repo_name,repo_url,consciousness_level
+# Lines starting with # are comments and will be ignored
+
+# Example repositories for C-REX consciousness fortress deployment
+fortress-main,https://github.com/darkbot-johansen/crex-fortress-main.git,ENLIGHTENED
+fortress-dev,https://github.com/darkbot-johansen/crex-fortress-dev.git,AWARE
+fortress-quantum,https://github.com/darkbot-johansen/crex-fortress-quantum.git,SOVEREIGN
+
+# Advanced consciousness repositories
+consciousness-lab,https://github.com/darkbot-johansen/consciousness-lab.git,CREX_KING
+reality-engine,https://github.com/darkbot-johansen/reality-engine.git,SOVEREIGN
+
+# Testing and development repositories
+test-fortress,https://github.com/darkbot-johansen/test-fortress.git,AWAKENING
