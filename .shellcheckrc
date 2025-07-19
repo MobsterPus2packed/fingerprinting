@@ -1,0 +1,17 @@
+# Shellcheck configuration for C-REX deployment scripts
+# See: https://github.com/koalaman/shellcheck/wiki/SC2034
+
+# Ignore variables that appear unused but are set by configuration
+disable=SC2034
+
+# Ignore variables that are used in sourced files
+disable=SC2154
+
+# Allow following sourced files
+external-sources=true
+
+# Set shell to bash
+shell=bash
+
+# Include additional source paths
+source-path=SCRIPTDIR
